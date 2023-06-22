@@ -28,10 +28,16 @@ Container - Application Context
             1. Beans, their dependencies, and configuration details are specified in XML files.
          4. `JavaConfig + AnnotationConfig:` you can use mix of these configurations based on project requirements
    4. **Instantiating a Container**
-      1. Java Based Configuration : See Code for example 
-      2. Main class:
-         1. link: [JavaBased](src/main/java/JavaBasedConfig.java)
-      3. Configuration file:
-         1. link :[configuration](src/main/java/config/JavaConfiguration.java)
+      1. Java Based Configuration : Code for reference 
+         1. Single configuration file
+            1. Main class:
+               1. link: [JavaBased](src/main/java/JavaBasedConfig.java)
+            2. Configuration file:
+               1. link :[configuration](src/main/java/config/JavaConfiguration.java)
+         2. Working with multiple Configuration file
+            1. [Main class:](src/main/java/multipleConfigurationFiles/JavaBasedMultiConfiguration.java)
+            2. Configuration classes
+               1. [config-one](src/main/java/config/JavaConfiguration.java)
+               2. [config-two](src/main/java/config/JavaConfiurationFileTwo.java)
             
             
