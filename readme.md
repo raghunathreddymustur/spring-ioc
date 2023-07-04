@@ -179,26 +179,57 @@ Container - Application Context
                   }
                   
                      ```
-                  2. Using @Autowired in configuration class - Example
-                     ```java
-                     @Bean
-                     public UPI getDirectUpiPayment()
-                     {
-                        return new UPI();
-                     }
+               2. Using @Autowired in configuration class - Example
+                  ```java
+                  @Bean
+                  public UPI getDirectUpiPayment()
+                  {
+                     return new UPI();
+                  }
                      
-                     @Bean
-                     public Card getDirectCardPayment(){
-                     return new Card();
-                     }
+                  @Bean
+                  public Card getDirectCardPayment(){
+                  return new Card();
+                  }
                      
-                     @Bean
-                     @Autowired
-                     public  Payment multiPaymentTwo(UPI upi, Card card){
-                        return new MultiplePaymentSupport(upi,card);
-                     }
-                     ```
-               
+                  @Bean
+                  @Autowired
+                  public  Payment multiPaymentTwo(UPI upi, Card card){
+                     return new MultiplePaymentSupport(upi,card);
+                  }
+                  ```
+            6. Annotation Based Dependency injection
+               1. Using @Autowired
+                  1. @Autowired is an annotation that is processed by AutowiredAnnotationBeanPostProcessor,
+                     which can be put onto class constructor, field, setter method or config method. Using this annotation
+                     enables automatic Spring Dependency Resolution that is primary based on types.
+                  2. @Autowired has a property required which can be used to tell Spring if dependency is required or
+                     optional. By default dependency is required. If @Autowired with required dependency is used on top
+                     of constructor or method that contains multiple arguments, then all arguments are considered required
+                     dependency unless argument is of type Optional, is marked as @Nullable, or is marked as
+                     @Autowired(required = false).
+                  3. If @Autowired is used on top of Collection or Map then Spring will inject all beans matching the
+                     type into Collection and key-value pairs as BeanName-Bean into Map. Order of elements depends on
+                     usage of @Order, @Priority annotations and implementation of Ordered interface.
+                  4. @Autowired uses following steps when resolving dependency:
+                     1. Match exactly by type, if only one found, finish.
+                     2. If multiple beans of same type found, check if any contains @Primary annotation, if yes, inject
+                        @Primary bean and finish.
+                     3. If no exactly one match exists, check if @Qualifier exists for field, if yes use @Qualifier to
+                        find matching bean.
+                     4. If still no exactly one bean found, narrow the search by using bean name.
+                     5. If still no exactly one bean found, throw exception (NoSuchBeanDefinitionException,
+                        NoUniqueBeanDefinitionException, …). 
+                  5. Types of Annoatation based Injection
+                     1. Feild Injection
+                     2. Constructor Injection
+                     3. Setter Injection
+                  6. Field Injection
+                     1. Autowired fields can have any visibility level
+                     2. Injection is happening after Bean is created but before any init method (@PostConstruct, InitializingBean, @Bean(initMethod)) is called
+                     3. By default field is required, however you can use Optional, @Nullable or  @Autowired(required = false) to indicate that field is not required.
+
+                  
                                                           
    
 
