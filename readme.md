@@ -1,9 +1,15 @@
 Common Errors
 ------------
-1. NoSuchBeanDefinition Found
-   1. Problem with dependencies and its version compatibility with others dependencies 
-   2. problem with `Spring Context` dependency - changing of version of this dependency worked.
-   3. Problem with IDE --- Not sure
+1. Spring
+   1. NoSuchBeanDefinition Found
+      1. Problem with dependencies and its version compatibility with others dependencies 
+      2. problem with `Spring Context` dependency - changing of version of this dependency worked.
+      3. Problem with IDE --- Not sure
+2. Git
+   1. Detached Head
+      1. Solved using this video
+         1. https://www.youtube.com/watch?v=SwDF9mtI8Ek
+
 
 Dependencies
 ----------
