@@ -7,6 +7,6 @@ public class Runner {
     public static void main(String[] args) {
         AnnotationConfigApplicationContext context= new AnnotationConfigApplicationContext(Config.class);
         context.registerShutdownHook();
-        System.out.println(context.getBean("twoW"));
+        context.getBean("twoWheeler", TwoWheeler.class).move();
     }
 }

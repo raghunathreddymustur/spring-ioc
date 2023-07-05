@@ -1,3 +1,10 @@
+Common Errors
+------------
+1. NoSuchBeanDefinition Found
+   1. Problem with dependencies and its version compatibility with others dependencies 
+   2. problem with `Spring Context` dependency - changing of version of this dependency worked.
+   3. Problem with IDE --- Not sure
+
 Dependencies
 ----------
 1. the `org.springframework:spring-context` dependency is a core module of the Spring framework that provides the fundamental functionalities for managing the application context. It includes the ApplicationContext interface, which represents the Spring IoC container, and various other classes and components that enable dependency injection, bean management, and more. Here are some key features and use cases of the spring-context module
