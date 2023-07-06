@@ -16,6 +16,7 @@ public class TwoWheeler implements Vechicle{
 
     @Override
     public void move() {
+        System.out.println(wheel);
         System.out.println("Two Wheeler Moved");
     }
 }

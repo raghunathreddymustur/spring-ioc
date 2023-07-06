@@ -240,7 +240,22 @@ Container - Application Context
                   6. Field Injection
                      1. Autowired fields can have any visibility level
                      2. Injection is happening after Bean is created but before any init method (@PostConstruct, InitializingBean, @Bean(initMethod)) is called
-                     3. By default field is required, however you can use Optional, @Nullable or  @Autowired(required = false) to indicate that field is not required.
+                     3. By default field is required, `however you can use Optional, @Nullable or  @Autowired(required = false) to indicate that field is not required.`
+                     4. Example
+                        ```java
+                         @Component
+                         public class FourWheeler implements Vechicle{
+                          @Autowired
+                          private Wheel wheel;
+                          @Autowired
+                          private Optional<Engine> engine;
+                          @Autowired
+                          @Nullable
+                          private Seat seat;
+                          @Autowired(required = false)
+                          private Window window;
+                         ```      
+                        
 
                   
                                                           
