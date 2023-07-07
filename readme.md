@@ -20,7 +20,9 @@ Dependencies
    4. Bean Lifecycle Management
    5. Event Handling
 2. the `javax.annotation` package provides annotations that are commonly used in Java applications, including those developed with the Spring framework. These annotations offer additional metadata and semantics to enhance the functionality and behavior of your code. Some notable annotations from the javax.annotation package are:
-   1. Required whenever you using annotation based configuration -- other @annotations won't work
+   1. Required whenever you using annotation based configuration -- few @annotations won't work
+
+
 Container - Application Context
 ---------
 1. `ApplicationContext` 
@@ -224,6 +226,20 @@ Container - Application Context
                   3. If @Autowired is used on top of Collection or Map then Spring will inject all beans matching the
                      type into Collection and key-value pairs as BeanName-Bean into Map. Order of elements depends on
                      usage of @Order, @Priority annotations and implementation of Ordered interface.
+                     1. ```java
+                        @Component
+                        public class AutowiredOnCollection { 
+                        @Autowired
+                        List<Vechicle> vechicleLis;
+                        
+                        public void printVechicle()
+                        { 
+                            vechicleLis.forEach(System.out::println);
+                        }
+                        
+                        Note : order of list is dependent upon @order and @Priority annoations declared on depedencies
+
+                          ```
                   4. @Autowired uses following steps when resolving dependency:
                      1. Match exactly by type, if only one found, finish.
                      2. If multiple beans of same type found, check if any contains @Primary annotation, if yes, inject
@@ -240,7 +256,25 @@ Container - Application Context
                   6. Field Injection
                      1. Autowired fields can have any visibility level
                      2. Injection is happening after Bean is created but before any init method (@PostConstruct, InitializingBean, @Bean(initMethod)) is called
+                        1. Intution 
+                           1. By injecting dependencies into the fields before initialization methods are invoked, you can access the dependencies during initialization and perform any necessary configuration or setup operations. This allows you to leverage the injected dependencies in your initialization logic, ensuring that the bean is properly initialized and ready for use.
+                        2. Example
+                           1. Suppose we have a UserService bean that requires a UserRepository dependency for data access. During the initialization of the UserService, we want to perform some configuration operations on the injected UserRepository, such as setting additional properties or calling initialization methods.
+                              1. ```java
+                                 @Service
+                                 public class UserService { 
+                                 @Autowired
+                                 private UserRepository userRepository;
+                              
+                                 @PostConstruct
+                                 public void init() { 
+                                 userRepository.setAdditionalProperty("some value");
+                                 userRepository.initialize();
+                                  }
+                                 }
+                                 ```
                      3. By default field is required, `however you can use Optional, @Nullable or  @Autowired(required = false) to indicate that field is not required.`
+                        1. Whenever field is declared Optional, Nullable or @Autowired(required = false) is no bean is found then it will null
                      4. Example
                         ```java
                          @Component
@@ -255,6 +289,213 @@ Container - Application Context
                           @Autowired(required = false)
                           private Window window;
                          ```      
+                     5. Disadvantages
+                        1. Null-Safety
+                           1. Field injection creates a risk of NullPointerException if dependencies aren’t correctly initialized.
+                        2. Immutability
+                           1. Using the field injection, we are unable to create immutable classes.
+                           2. We need to instantiate the final fields when they're declared or through the constructor. Furthermore, Spring performs autowiring once the constructors have been called. Therefore, it’s impossible to autowire the final fields using field injection
+                        3. Single Responsibility Violation
+                           1. When we use field injection, we may end up violating the single responsibility principle. We can easily add more dependencies than necessary and create a class that's doing more than one job.
+                        4. Testing
+                           1. Unit testing reveals one of the major drawbacks of the field injection approach.
+                           2. Suppose we’d like to write a unit test to check whether the process() method defined in the EmailService is working properly.
+                           3. Firstly, we'd like to mock the EmailValidation object. However, since we inserted the EmailValidator using field injection, we can't directly replace it with a mocked version:
+                           4. **SOURCE - read**
+                              1. https://www.baeldung.com/java-spring-field-injection-cons#null-safety
+                        
+                        5. **Encourages Fragile Code**: Field injection can make it easier to introduce coupling between classes, as the dependencies are directly accessed through fields. This can result in code that is more tightly coupled and less resilient to changes. It can also make refactoring more challenging as changes in one class can have unintended consequences on other classes.
+                           1. Example:
+                           2. Suppose we have a NotificationService that is responsible for sending notifications to users using different channels, such as email and SMS. We have two implementations of the NotificationChannel interface: EmailNotificationChannel and SMSNotificationChannel.
+                           3. ```java
+                              @Service
+                              public class NotificationService {
+                              @Autowired
+                              private EmailNotificationChannel emailNotificationChannel;
+                              @Autowired
+                              private SMSNotificationChannel smsNotificationChannel;
+                              
+                              public void sendNotification(String message) { 
+                              emailNotificationChannel.send(message);
+                               smsNotificationChannel.send(message);}
+                              }
+                              
+                              @Component
+                              public interface NotificationChannel {    
+                               void send(String message);
+                              }
+                              
+                              @Component
+                              public class EmailNotificationChannel implements NotificationChannel { 
+                               public void send(String message) { 
+                              }}
+                              
+                              @Component
+                              public class SMSNotificationChannel implements NotificationChannel { 
+                              public void send(String message) { 
+                              }}
+                               ```
+                              
+                           4. In this example, the NotificationService depends on the EmailNotificationChannel and SMSNotificationChannel through field injection. It directly accesses the specific implementations of the NotificationChannel interface.
+                           5. Now, let's say we need to introduce a new notification channel, PushNotificationChannel, and replace the existing EmailNotificationChannel with a new implementation, NewEmailNotificationChannel. We modify the code as follows:
+                           6. ```java
+                              @Service
+                              public class NotificationService { 
+                              @Autowired
+                              private EmailNotificationChannel newEmailNotificationChannel;
+                              
+                              @Autowired
+                              private SMSNotificationChannel smsNotificationChannel;
+                              
+                              @Autowired
+                              private PushNotificationChannel pushNotificationChannel;
+                              
+                              public void sendNotification(String message) { 
+                              newEmailNotificationChannel.send(message);
+                              smsNotificationChannel.send(message);
+                              pushNotificationChannel.send(message);
+                              }}
+                              
+                              @Component
+                              public interface NotificationChannel { 
+                              void send(String message);
+                              }
+                              
+                              @Component
+                              public class NewEmailNotificationChannel implements NotificationChannel {  
+                              public void send(String message) { 
+                              }
+                              }
+                              
+                              @Component
+                              public class SMSNotificationChannel implements NotificationChannel { 
+                               public void send(String message) { 
+                              }}
+                              
+                              @Component
+                              public class PushNotificationChannel implements NotificationChannel { 
+                              public void send(String message) {
+                              }}
+                              ```
+                           7. In this modified code, we changed the EmailNotificationChannel to NewEmailNotificationChannel and added the PushNotificationChannel. However, these changes have introduced tight coupling between the NotificationService and the specific implementations of the notification channels.
+                           8. As a result, replacing the EmailNotificationChannel with the NewEmailNotificationChannel requires modifying the NotificationService class, potentially impacting its behavior or functionality. Additionally, introducing the PushNotificationChannel has also affected the NotificationService, requiring it to handle the new channel.
+                           9. This tight coupling can make the codebase fragile and difficult to maintain. Any changes to the interface or contract of the NotificationChannel can have unintended consequences on the NotificationService and other dependent classes.
+                           10. To address these issues, it is recommended to use dependency injection approaches that promote loose coupling, such as constructor injection or setter injection. By explicitly declaring dependencies through constructors or setters, we can reduce the coupling between classes and make the code more resilient to changes.
+
+                  7. Setter Injection
+                     1. Constructor can have any access modifier (public, protected, private, package-private).
+                     2. If there is only one constructor in class, there is no need to use @Autowired on top of it, Spring will use
+                        this default constructor anyway and will inject dependencies into it
+                        1. Example
+                           1. ```java
+                              @Component
+                              public class ConsturctorFourWheeler { 
+                              private Engine engine;
+                              private Wheel wheel;
+                              private Seat seat;
+                              private Window window;
+                              public ConsturctorFourWheeler(Engine engine, Wheel wheel, Seat seat, Window window) { 
+                              this.engine = engine;
+                              this.wheel = wheel;
+                              this.seat = seat;
+                              this.window = window;
+                              }
+                              }
+                              ```
+                     3. If class defines multiple constructor, then you are obligated to use @Autowired to tell Spring which
+                        constructor should be used to create Spring Bean. If you will have a class with multiple constructor
+                        without any of constructor marked as @Autowired then Spring will throw NoSuchMethodException.
+                     4. By default all arguments in constructor are required, however you can use Optional, @Nullable or
+                        @Autowired(required = false) to indicate that parameter is not required.
+                     5. example
+                        1. ```java
+                              @Component
+                              public class ConsturctorFourWheeler { 
+                              private Engine engine;
+                              private Optional<Wheel> wheel;
+                              private Seat seat;
+                              private Window window;
+                              public ConsturctorFourWheeler(Engine engine, Seat seat, Window window) { 
+                              this.engine = engine;
+                              this.wheel = wheel;
+                              this.seat = seat;
+                              this.window = window;
+                              }
+                           @Autowired
+                           public ConsturctorFourWheeler(Engine engine, Optional<Wheel> wheel, @Nullable Seat seat, @Autowired(required = false)  Window window) { 
+                           this.engine = engine;
+                           this.seat = seat;
+                           this.window = window;
+                                
+                              }
+                           }
+                              ```
+                           
+                  8. Setter Injection
+                     1. @Autowired can be used with method injection like this
+                     2. @Autowired method can have any visibility level and also can contain multiple parameters. If method
+                        contains multiple parameters, then by default it is assumed that in @Autowired method all parameters
+                        are required. If Spring will be unable to resolve all dependencies for this method,
+                        NoSuchBeanDefinitionException or NoUniqueBeanDefinitionException will be thrown.
+                     3. When using @Autowired(required = false) with method, it will be invoked only if Spring can
+                        resolve all parameters.
+                     4. If you want Spring to invoke method only with arguments partially resolved, you need to use
+                        @Autowired method with parameter marked as Optional, @Nullable or @Autowired(required
+                        = false) to indicate that this parameter is not required.
+                     5. Example
+                        ```java
+                        public class SetterFourWheeler { 
+                        private Engine engine;
+                        private Wheel wheel;
+                        private Seat seat;
+                        private Window window;
+                        
+                        @Autowired
+                        public void setEngine(Engine engine) { 
+                            this.engine = engine;
+                        }
+                        
+                         @Autowired
+                        public void setWheel(Wheel wheel) { 
+                        this.seat = seat;
+                        }
+                        @Autowired(required = false)
+                        public void setSeatAndWindow(Seat seat,Window window) { 
+                        this.seat = seat;
+                        this.window = window;
+                        }
+                        //Nullable 
+                        @Autowired(required = false)
+                        public void setSeatAndWindow(Seat seat,Optional<Window> window, @Nullable Engine engine, @Autowired(required =false ) Wheel wheel) { 
+                        this.seat = seat;
+                        this.window = window;
+                        }
+                        
+                        }
+
+                        ```
+
+                  9. Constructor-based or setter-based DI
+                     1. Since you can mix constructor-based and setter-based DI, it is a good rule of thumb to use
+                        constructors for mandatory dependencies and setter methods or configuration methods for
+                        optional dependencies. Note that use of the @Autowired annotation on a setter method can
+                        be used to make the property be a required dependency; however, constructor injection with
+                        programmatic validation of arguments is preferable.
+                     2. he Spring team generally advocates constructor injection, as it lets you implement
+                        application components as immutable objects and ensures that required dependencies are
+                        not null. Furthermore, constructor-injected components are always returned to the client
+                        (calling) code in a fully initialized state. As a side note, a large number of constructor
+                        arguments is a bad code smell, implying that the class likely has too many responsibilities and
+                        should be refactored to better address proper separation of concerns
+                     3. Setter injection should primarily only be used for optional dependencies that can be assigned
+                        reasonable default values within the class. Otherwise, not-null checks must be performed
+                        everywhere the code uses the dependency. One benefit of setter injection is that setter
+                        methods make objects of that class amenable to reconfiguration or re-injection later.
+                        Management through JMX MBeans is therefore a compelling use case for setter injection.
+                  
+
+
+
                         
 
                   
