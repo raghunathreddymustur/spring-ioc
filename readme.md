@@ -4,7 +4,7 @@ Common Errors
    1. NoSuchBeanDefinition Found
       1. Problem with dependencies and its version compatibility with others dependencies 
       2. problem with `Spring Context` dependency - changing of version of this dependency worked.
-      3. Problem with IDE --- Not sure
+      3. Problem with IDE Cache--- Not sure
 2. Git
    1. Detached Head
       1. Solved using this video
@@ -1091,23 +1091,140 @@ Why  @Configuration class and @Bean methods final
    1. Specifying which beans are part of which profile
    2. Specifying which profiles are active
 2. You can specify beans being part of profile in following ways:
-    Use @Profile annotation at @Component class level – bean will be part of profile/profiles
-   specified in annotation
-    Use @Profile annotation at @Configuration class level – all beans from this configuration will
+   1. Use @Profile annotation at @Component class level – bean will be part of profile/profiles
+   specified in annotation 
+      1. ```java
+         @Component
+         @Profile("database")
+         class DatabaseStoreFinancialDataDao implements FinancialDataDao { 
+         }
+            ```
+   2. Use @Profile annotation at @Configuration class level – all beans from this configuration will
    be part of profile/profiles specified in annotation
-    Use @Profile annotation at @Bean method of @Configuration class – instance of bean
+      1. ```java
+         @Configuration
+         @Profile("file")
+         public class FileApplicationConfiguration {
+         @Bean
+         public FinancialDataDao fileStoreFinancialDataDao() {
+         return new FileStoreFinancialDataDao();
+         }
+
+             @Bean
+             public FinancialReportWriter fileStoreFinancialReportWriter() {
+                 return new FileStoreFinancialReportWriter();
+             }
+         }
+
+            ```
+   3. Use @Profile annotation at @Bean method of @Configuration class – instance of bean
    returned by this method will be part of profile/profiles specified in annotation
-    Use @Profile annotation to define custom annotation - @Component / @Configuration /
+      1. ```java
+         @Configuration
+         public class ApplicationConfiguration {
+             @Bean
+             @Profile("database")
+             public FinancialDataDao databaseStoreFinancialDataDao() {
+                 return new DatabaseStoreFinancialDataDao();
+             }
+
+             @Bean
+             @Profile("database")
+             public FinancialReportWriter databaseStoreFinancialReportWriter() {
+                 return new DatabaseStoreFinancialReportWriter();
+             }
+
+             @Bean
+             @Profile("file")
+             public FinancialDataDao fileStoreFinancialDataDao() {
+                 return new FileStoreFinancialDataDao();
+             }
+
+             @Bean
+             @Profile("file")
+             public FinancialReportWriter fileStoreFinancialReportWriter() {
+                 return new FileStoreFinancialReportWriter();
+             }
+         }
+
+            ```
+   4. Use @Profile annotation to define custom annotation - @Component / @Configuration /
    @Bean method annotated with custom annotation will be part of profile/profiles specified in
    annotation
+      1. ```java
+         @Profile("database")
+         public @interface DatabaseProfile {
+         }
+         
+         @Component
+         @DatabaseProfile
+         class DatabaseStoreFinancialDataDao implements FinancialDataDao {
+         @Override
+         public FinancialYearSummary findFinancialYearSummary(int year) {
+         System.out.println("Database Dao => findFinancialYearSummary");
+         return new FinancialYearSummary();
+         }
+         ```
 3. If Bean does not have profile specified in any way, it will be created in every profile.
    You can use ‘!’ to specify in which profile bean should not be created.
+   1. ```java
+      @Configuration
+      public class ApplicationConfiguration {
+      @Bean
+      @Profile("!prod")
+      public DataWriter devDataWriter() {
+      return new DevDataWriter();
+      }
+      ```
 4. You can activate profiles in following way:
-    Programmatically with usage of ConfigurableEnvironment
-    By using spring.profiles.active property
-    On JUnit Test level by using @ActiveProfiles annotation
-    In Spring Boot Programmatically by usage of SpringApplicationBuilder
-    In Spring Boot by application.properties or on yml level
+   1. Programmatically with usage of ConfigurableEnvironment
+      1. ```java
+         public class Runner {
+            public static void main(String[] args) {
+                AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+                context.registerShutdownHook();
+
+                 // Activate profile
+                 context.getEnvironment().setActiveProfiles("file");
+                 context.register(ApplicationConfig.class);
+                 context.refresh();
+            }
+           ```
+   2. By using spring.profiles.active property - by specifying under VM options
+      1. -Dspring.profiles.active = file
+   3. On JUnit Test level by using @ActiveProfiles annotation
+      1. ```java
+         @RunWith(SpringJUnit4ClassRunner.class)
+         @ContextConfiguration(classes = ApplicationConfig.class)
+         @ActiveProfiles("database")
+         public class ApplicationConfigTest {
+         @Autowired
+         private FinancialDataDao financialDataDao;
+
+             @Test
+             public void shouldTestFinancialDataDao() {
+                 System.out.println("Will perform test on " + financialDataDao.getClass().getSimpleName());
+             }
+         }
+          ```
+   4. In Spring Boot Programmatically by usage of SpringApplicationBuilder
+      1. ```java
+         @SpringBootApplication
+         public class Runner implements CommandLineRunner {
+
+             @Autowired
+             private FinancialDataDao financialDataDao;
+
+             public static void main(String[] args) {
+                 new SpringApplicationBuilder(Runner.class)
+                         .profiles("database")
+                         .run(args);
+             }
+         }
+
+         ```
+   5. In Spring Boot by application.properties or on yml level by addding property
+      1. spring.profiles.active = database
 5. Spring Profiles are useful in following cases:
     Changing Behavior of the system in Different Environments by changing set of Beans that are
    part of specific environments, for example prod, cert, dev
@@ -1123,10 +1240,387 @@ Why  @Configuration class and @Bean methods final
       Integer.MAX_VALUE - 2,147,483,647 (231 − 1).
 
 
+@Import 
+-------
+1. In Spring, the @Import annotation is used to import and combine multiple configuration files or classes into a single configuration class. This allows you to modularize your configuration and reuse existing configurations across multiple parts of your application.
+2. ```java
+   @Configuration
+   public class AppConfig1 {
+   // Configuration 1 code...
+   }
+
+   @Configuration
+   public class AppConfig2 {
+   // Configuration 2 code...
+   }
+   @Configuration
+   @Import({AppConfig1.class, AppConfig2.class})
+   public class MainConfig {
+   // Main configuration code...
+   }
+
+    ```
+@Value
+------
+1. @Value annotation has one field value that accepts:
+   1. Simple value
+   2. Property reference
+   3. VM arguments
+   4. SpEL String
+2. @Value annotation can be used on top of:
+   1. Field
+   2. Constructor Parameter
+   3. Method – all fields will have injected the same value
+   4. Method parameter – Injection will not be performed automatically if @Value is not present
+      on method level or if @Autowired is not present at method level
+   5. Annotation type
+3. Inside @Value you can specify:
+   1. Simple value - @Value("John"), @Value("true")
+   2. Reference a property - @Value("${app.department.id}")
+   3. Perform SpEL inline computation
+      1. @Value("#{'Wall Street'.toUpperCase()}")
+      2. @Value("#{5000 * 0.9}")
+      3. @Value("#{'${app.department.id}'.toUpperCase()}")
+   4. Inject values into array, list, set, map - have to register ConversionService bean
+      1. ```java
+         @Configuration
+         @ComponentScan
+         @PropertySource("application.properties")
+         public class ApplicationConfiguration {
+         @Bean
+         public ConversionService conversionService() {
+         return new DefaultConversionService();
+         }
+          }
+
+         ```
+4. Use cases
+   1. Setting simple values of Spring Bean Fields, Method Parameters, Constructor Parameters
+   2. Injecting property/environment values into Spring Bean Fields, Method Parameters,
+      Constructor Parameters
+   3. Injecting results of SpEL expressions into Spring Bean Fields, Method Parameters, Constructor
+      Parameters
+   4. Injecting values from other Spring Beans into Spring Bean Fields, Method Parameters,
+      Constructor Parameters
+   5. Injecting values into collections (arrays, lists, sets, maps) from literals,
+      property/environment values, other Spring Beans
+   6. Setting default values of Spring Bean Fields, Method Parameters, Constructor Parameters
+      when referenced value is missing
+      1. ```java
+         @Value("${app.tax.department.alt.name:no_name}")
+         private String taxDepartmentAlternateName;
+            ```
+5. Example
+   1. ```java
+      @Component
+      public class SpringBean {
+      @Value("John")
+      private String name;
+
+          @Value("#{'Wall Street'.toUpperCase()}")
+          private String streetName;
+
+          @Value("true")
+          private boolean accountExists;
+
+          @Value("100")
+          private int idNumber;
+
+          @Value("#{5000 * 0.9}")
+          private float accountBalance;
+
+          @Value("${app.department.id}")
+          private int departmentId;
+
+          @Value("#{'${app.department.id}'.toUpperCase()}")
+          private String departmentName;
+
+          private String managerName;
+
+          private String supportContactMail;
+
+          private String supportPhone;
+
+          private String supportAddress;
+
+          @Value("${app.dependent.departments}")
+          private String[] dependentDepartments;
+
+          @Value("${app.cases.id}")
+          private List<Integer> casesIds;
+
+          @Value("${app.cases.set}")
+          private Set<String> casesSet;
+
+          @Value("#{${app.cases.map}}")
+          private Map<String, Integer> casesMap;
+
+          public SpringBean(@Value("#{'${app.manager.name}'.toUpperCase()}") String managerName) {
+              this.managerName = managerName;
+          }
+
+          @Value("${app.support.contact}")
+          public void setSupportContactMail(String supportContactMail) {
+              this.supportContactMail = supportContactMail;
+          }
+
+          @Autowired
+          public void setSupportPhoneAndAddress(@Value("${app.support.phone}") String supportPhone,    @Value("${app.support.address}") String supportAddress) {
+              this.supportPhone = supportPhone;
+              this.supportAddress = supportAddress;
+          }
+      }
+    
+   
+      // APPLICATION.properties
+       app.department.id=5
+       app.department.name=accounting
+       app.manager.name=Mike Stevens
+       app.support.contact=support@company.com
+       app.support.phone=+19999999999
+       app.support.address=Michigan Avenue
+       app.dependent.departments=DEPA, DEPB, DEPC
+       app.cases.id=1, 2, 3
+       app.cases.set=caseA, caseB, caseC
+       app.cases.map={caseA: 1, caseB: 2, caseC: 3}
+       ```
 
 
-         
-            
+SpEL - Spring Expression Language
+--------------------------------
+1. Spring Expression Language (SpEL) is an expression language that allows you to query and
+   manipulate objects graphs during the runtime. SpEL is used in different products across Spring
+   portfolio.
+2. SpEL can be used independently with usage of ExpressionParser and EvaluationContext
+   or can be used on top of fields, method parameters, constructor arguments via @Value
+   annotation @Value("#{ … }").
+3. SpEL supported features:
+   1.  Literal expressions
+       Boolean and relational
+      operators
+       Regular expressions
+       Class expressions
+       Accessing properties,
+      arrays, lists, and maps
+       Method invocation
+       Relational operators
+       Assignment
+       Calling constructors
+       Bean references
+       Array construction
+       Inline lists
+       Inline maps
+       Ternary operator
+       Variables
+       User-defined functions
+       Collection projection
+       Collection selection
+       Templated expressions
+   2. Reference
+      1. https://docs.spring.io/spring-framework/reference/core/expressions/language-ref.html
+   3. Example
+      1. ```java
+         public class Runner1 {
+            public static void main(String[] args) {
+            ExpressionParser parser = new SpelExpressionParser();
+
+                 System.out.println(parser.parseExpression("'Hello'.concat(' world!')").getValue());
+                 System.out.println(parser.parseExpression("'2 + 2 equals = '.concat(2 + 2)").getValue());
+                 System.out.println(parser.parseExpression("new String('Wall Street').toUpperCase()").getValue()         );
+                 System.out.println(parser.parseExpression("24 * 60").getValue());
+                 System.out.println(parser.parseExpression("{1, 2, 3}").getValue());
+                 System.out.println(parser.parseExpression("{a: 1, b: 2, c: 3}").getValue());
+                 System.out.println(Arrays.toString((int[]) parser.parseExpression("new int[]{1, 2, 3}").         getValue()));
+                 System.out.println(parser.parseExpression("5 < 10").getValue());
+            }
+            }
+
+         Note : Not fully Explored 
+         ```
+   4. You can reference following using SpEL:
+       Static Fields from class - T(com.example.Person).DEFAULT_NAME
+       Static Methods from class - T(com.example.Person).getDefaultName()
+       Spring Bean Property - @person.name
+       Spring Bean Method - @person.getName()
+       SpEL Variables - #personName
+       Object property on reference assigned to SpEL variables - #person.name
+       Object method on reference assigned to SpEL variables - #person.getName()
+       Spring Application Environment Properties - environment['app.file.property’]
+       System Properties - systemProperties['app.vm.property']
+       System Environment Properties - systemEnvironment['JAVA_HOME']
+   5. Example
+      ```java
+      public class Runner {
+      public static void main(String[] args) {
+      AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ApplicationConfiguration.class);
+       context.registerShutdownHook();
+
+        ExpressionParser parser = new SpelExpressionParser();
+        StandardEvaluationContext evaluationContext = new StandardEvaluationContext();
+        evaluationContext.setBeanResolver(new BeanFactoryResolver(context));
+
+        SpringBean1 springBean1 = context.getBean(SpringBean1.class);
+
+        System.out.println("getStaticMethodExecutionResult(): " + springBean1.getStaticMethodExecutionResult());
+        System.out.println("getStaticValueFetchResult(): " + springBean1.getStaticValueFetchResult());
+        System.out.println("getPropertyValue(): " + springBean1.getPropertyValue());
+        System.out.println("getMethodValue(): " + springBean1.getMethodValue());
+        System.out.println("getAppFileProperty(): " + springBean1.getAppFileProperty());
+        System.out.println("getAppVmProperty(): " + springBean1.getAppVmProperty());
+        System.out.println("getJavaHome(): " + springBean1.getJavaHome());
+        
+        // setting spel reference variables
+        evaluationContext.setVariable("firstName", "John");
+        evaluationContext.setVariable("objectRef", context.getBean(SpringBean2.class));
+
+        //acessing spel reference variables
+        System.out.println("#firstName: " + parser.parseExpression("#firstName").getValue(evaluationContext));
+        System.out.println("#objectRef.property: " + parser.parseExpression("#objectRef.property").getValue(evaluationContext));
+        System.out.println("#objectRef.method(): " + parser.parseExpression("#objectRef.method()").getValue(evaluationContext));
+       }
+        }
+      @Component
+      public class SpringBean1 {
+
+          @Value("#{T(com.spring.professional.exam.tutorial.module01.question33.beans.SpringBean2).staticMethod()}")
+          private String staticMethodExecutionResult;
+
+          @Value("#{T(com.spring.professional.exam.tutorial.module01.question33.beans.SpringBean2).STATIC_VALUE}")
+          private String staticValueFetchResult;
+
+          @Value("#{@springBean2.property}")
+          private String propertyValue;
+
+          @Value("#{@springBean2.method()}")
+          private String methodValue;
+
+          @Value("#{environment['app.file.property']}")
+          private String appFileProperty;
+
+          @Value("#{systemProperties['app.vm.property']}")
+          private String appVmProperty;
+
+          @Value("#{systemEnvironment['JAVA_HOME']}")
+          private String javaHome;
+
+          public String getStaticMethodExecutionResult() {
+              return staticMethodExecutionResult;
+          }
+
+          public String getStaticValueFetchResult() {
+        return staticValueFetchResult;
+          }
+
+          public String getPropertyValue() {
+        return propertyValue;
+          }
+
+          public String getMethodValue() {
+              return methodValue;
+          }
+
+          public String getAppFileProperty() {
+              return appFileProperty;
+          }
+
+          public String getAppVmProperty() {
+              return appVmProperty;
+          }
+
+          public String getJavaHome() {
+              return javaHome;
+          }
+      }
+      
+      @Configuration
+      @ComponentScan
+      @PropertySource("classpath:application.properties")
+      public class ApplicationConfiguration {
+      }
+
+       ```
+Environment abstraction
+-----------------------
+1. Environment Abstraction is part of Spring Container that models two key aspect of application environment:
+    Profiles
+    Properties
+2. Environment Abstraction is represent on code level by classes that implements Environment interface. This
+   interface allows you to resolve properties and also to list profiles. You can receive reference to class that
+   implements Environment by calling EnvironmentCapable class, implemented by ApplicationContext.
+   Properties can also be retrieved by using @Value("${…}") annotation.
+3. Environment Abstraction role in context of profiles is to determine which profiles are currently active, and
+   which are activated by default.
+4. Environment Abstraction role in context of properties is to provide convenient, standarized and generic service
+   that allows to resolve properties and also to configure property sources. 
+5. Properties may come from following
+   sources:
+    Properties Files
+    JVM system properties - vm options
+    System Environment Variables - 
+    JNDI
+    Servlet Config
+    Servlet Context Parameters
+6. Default property sources for standalone applications are configured in StandardEnvironment, which
+   includes JVM system properties and System Environment Variables. 
+7. When running Spring Application in Servlet
+   Environment, property sources will be configured based on StandardServletEnvironment, which
+   additionally includes Servlet Config and Servlet Context Parameters, optionally it might include
+   JndiPropertySource.
+8. Too add additional properties files as property sources you can use @PropertySource annotation.
+9. Example
+   ```java
+   public class Runner {
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+        context.registerShutdownHook();
+
+        //context.getEnvironment().setActiveProfiles("profile1", "profile2", "profile3");
+        // -Dspring.profiles.active="profile1,profile2,profile3"
+
+        context.register(ApplicationConfiguration.class);
+        context.refresh();
+
+        System.out.println(Arrays.toString(context.getEnvironment().getActiveProfiles()));
+        System.out.println(context.getEnvironment().getProperty("app.file.property"));
+        System.out.println(context.getEnvironment().getProperty("app.vm.property"));
+        System.out.println(context.getEnvironment().getProperty("app.env.property"));
+        System.out.println(context.getEnvironment().getProperty("user.home"));
+        System.out.println(context.getEnvironment().getProperty("JAVA_HOME"));
+        System.out.println(context.getEnvironment().getProperty("MAVEN_HOME"));
+
+     ```
+10. Property Sources in Spring Application vary based on type of applications that is being executed:
+    1. Standalone Application
+        Properties Files
+        JVM system properties
+        System Environment Variables
+    2. Servlet Container Application
+        Properties Files
+        JVM system properties
+        System Environment Variables
+        JNDI
+        ServletConfig init parameters
+        ServletContext init parameters
+    3. Spring Boot Application
+        Devtools properties from ~/.spring-boot-devtools.properties (when devtools is active)
+        @TestPropertySource annotations on tests
+        Properties attribute in @SpringBootTest tests
+        Command line arguments
+        Properties from SPRING_APPLICATION_JSON property
+        ServletConfig init parameters
+        ServletContext init parameters
+        JNDI attributes from java:comp/env
+        JVM system properties
+        System Environment Variables
+        RandomValuePropertySource - ${random.*}
+        application-{profile}.properties and YAML variants - outside of jar
+        application-{profile}.properties and YAML variants – inside jar
+        application.properties and YAML variants - outside of jar
+        application.properties and YAML variants - inside jar
+        @PropertySource annotations on @Configuration classes
+        Default properties - SpringApplication.setDefaultProperties
+
+
 
    
 
