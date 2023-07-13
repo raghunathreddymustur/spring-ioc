@@ -97,14 +97,14 @@ Container - Application Context
             1. A bean definition typically includes the following information:
                1. Bean Class: The class or interface that defines the type of the bean.
                2. Dependencies: The dependencies that the bean requires. These dependencies can be other beans or simple values.
-               3. Scope: The scope of the bean, which determines its lifecycle and visibility. Common scopes include singleton (a single shared instance), prototype (a new instance created each time it is requested), request (scoped to an HTTP request), session (scoped to an HTTP session), etc.
+               3. Scope: The scope of the bean, which determines its lifecycle and visibility. Common scopes include singleton (a single shared instance), prototype (a new instance created each time                   it is requested), request (scoped to an HTTP request), session (scoped to an HTTP session), etc.
                4. Configuration Settings: Additional configuration settings for the bean, such as initialization methods, destruction methods, post-processing, lazy initialization, etc
-               5. Qualifiers and Aliases: Qualifiers help in resolving ambiguities when multiple beans of the same type are present in the container. Aliases provide alternative names for a bean, allowing it to be referenced by multiple identifiers.
+               5. Qualifiers and Aliases: Qualifiers help in resolving ambiguities when multiple beans of the same type are present in the container. Aliases provide alternative names for a bean,                      allowing it to be referenced by multiple identifiers.
          5. BeanFactoryPostProcessors are processing bean definitions.
-            1. BeanFactoryPostProcessors are a powerful feature of the Spring framework that allow you to customize and modify bean definitions before they are instantiated by the container. They provide a way to perform advanced configuration and manipulation of bean definitions during the initialization phase of the Spring container.
+            1. BeanFactoryPostProcessors are a powerful feature of the Spring framework that allow you to customize and modify bean definitions before they are instantiated by the container. They                      provide a way to perform advanced configuration and manipulation of bean definitions during the initialization phase of the Spring container.
             2. Use cases are Modify Bean Definitions,Conditional Bean Creation... etc
             3. Example
-               1. we have an interface DataService and two implementations: DatabaseService and WebService. We want to customize the bean definitions of these implementations to automatically set a property called source with a specific value.
+               1. we have an interface DataService and two implementations: DatabaseService and WebService. We want to customize the bean definitions of these implementations to automatically set a                      property called source with a specific value.
                2. ````java
                   @Component
                   public class CustomPropertyBeanFactoryPostProcessor implements BeanFactoryPostProcessor {  
@@ -123,14 +123,14 @@ Container - Application Context
             6. BeanPostProcessors are called.
                1. postProcessBeforeInitialization method of BeanPostProcessor is called before intilization
             7. Bean @PostConstrcut method is called 
-               1. When a bean is created and all its dependencies have been injected, the @PostConstruct annotated method is automatically invoked by the container. It allows you to perform any necessary initialization or setup operations on the bean before it is ready for use.
+               1. When a bean is created and all its dependencies have been injected, the @PostConstruct annotated method is automatically invoked by the container. It allows you to perform any                         necessary initialization or setup operations on the bean before it is ready for use.
             8. eanPostProcessors are called.
                1. postProcessAfterInitialization method of BeanPostProcessor is called after intilization
             9. Application Runs.
             10. Application gets shutdown.
             11. Spring Context is closed.
             12. Destruction callbacks are invoked.
-                1. @PreDestroy method of bean is called, the PreDestroy annotation is used on a method as a callback notification to signal that the instance is in the process of being removed by the container. The method annotated with PreDestroy is typically used to release resources that it has been holding.
+                1. @PreDestroy method of bean is called, the PreDestroy annotation is used on a method as a callback notification to signal that the instance is in the process of being removed by                      the container. The method annotated with PreDestroy is typically used to release resources that it has been holding.
                 
    5. BeanFactoryPostProcessor
       1. BeanFactoryPostProcessor is an interface that contains single method postProcessBeanFactory,
