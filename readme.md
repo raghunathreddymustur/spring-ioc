@@ -90,7 +90,8 @@ Container - Application Context
                
 4. What is container
       1.Spring provides a container for beans. It manages lifecycle of the beans and also provides additional services through usage of Application Context
-      2. Spring Container Lifecycle:
+Spring Container Lifecycle:
+-----------------------------
          1. Application is started. -- When you run the app
          2. Spring container is created. -- by creating the instance of Application context
          3. Containers reads configuration - XML, JAVA Based, Annotation based configuration
@@ -98,7 +99,8 @@ Container - Application Context
             1. A bean definition typically includes the following information:
                1. Bean Class: The class or interface that defines the type of the bean.
                2. Dependencies: The dependencies that the bean requires. These dependencies can be other beans or simple values.
-               3. Scope: The scope of the bean, which determines its lifecycle and visibility. Common scopes include singleton (a single shared instance), prototype (a new instance created each time                   it is requested), request (scoped to an HTTP request), session (scoped to an HTTP session), etc.
+               3. Scope: The scope of the bean, which determines its lifecycle and visibility. Common scopes include singleton (a single shared instance), prototype (a 
+                   new instance created each time  it is requested), request (scoped to an HTTP request), session (scoped to an HTTP session), etc.
                4. Configuration Settings: Additional configuration settings for the bean, such as initialization methods, destruction methods, post-processing, lazy initialization, etc
                5. Qualifiers and Aliases: Qualifiers help in resolving ambiguities when multiple beans of the same type are present in the container. Aliases provide alternative names for a bean,                      allowing it to be referenced by multiple identifiers.
          5. BeanFactoryPostProcessors are processing bean definitions.
