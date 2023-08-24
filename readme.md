@@ -60,7 +60,8 @@ Container - Application Context
             2. SpringBootWebApplication – Embedded Tomcat
 
 
-   3. **Configuration :** The container gets its instructions on what objects to instantiate, configure, and assemble by reading configuration metadata.
+   3. **Configuration :**
+       The container gets its instructions on what objects to instantiate, configure, and assemble by reading configuration metadata.
       1. Commonly used configuration methods
          1. **Java Configuration**
             1. Java-based configuration allows you to define and configure beans using Java classes and annotations.
