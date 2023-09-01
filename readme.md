@@ -147,7 +147,10 @@ Spring Container Lifecycle:
          other beans. This is why BeanFactoryPostProcessors needs to be registered from static method level.
       4. PropertySourcesPlaceholderConfigurer is a BeanFactoryPostProcessor that is used to resolve properties
          placeholder in Spring Beans on fields annotated with @Value("${property_name}").
-      5. Example
+      5. Keep in mind that in more recent versions of Spring (e.g., Spring Boot), much of this configuration is handled automatically, and you often don't need to explicitly define    
+         PropertySourcesPlaceholderConfigurer. Spring Boot, for instance, provides sensible defaults for property resolution,
+         and you can define properties directly in application.properties or application.yml files, which are automatically picked up and used by the application.
+      7. Example
          1. ```java
             // creating custom implemenatation
             public class CustomBeanFactoryPostProcessor implements BeanFactoryPostProcessor {
